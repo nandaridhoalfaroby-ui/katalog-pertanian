@@ -3,6 +3,7 @@ class BarangTani {
   final String kategori;
   final int harga;
   final String satuan;
+  final String satuanStok;
   final String gambar;
   int stok;
 
@@ -11,6 +12,7 @@ class BarangTani {
     required this.kategori,
     required this.harga,
     required this.satuan,
+    required this.satuanStok,
     required this.gambar,
     required this.stok,
   });

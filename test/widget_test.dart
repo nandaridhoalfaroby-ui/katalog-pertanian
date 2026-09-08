@@ -11,24 +11,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:katalog_tani/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp() as Widget);
+  testWidgets('search filters products while typing',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const TaniMartApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final searchField = find.byType(TextField);
+    expect(searchField, findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.enterText(searchField, 'melon');
+    await tester.pump();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Benih Melon Golden Harapan'), findsOneWidget);
+    expect(find.text('Benih Tomat Mutiara'), findsNothing);
   });
 }
 
-class MyApp {
-  const MyApp();
-}

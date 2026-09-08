@@ -1,21 +1,36 @@
 import 'package:flutter/material.dart';
 import '../models/barang_tani.dart';
+import 'pemilih_jumlah.dart';
 
-class DetailBarangPage extends StatelessWidget {
+class DetailBarangPage extends StatefulWidget {
   final BarangTani barang;
+  final ValueChanged<int> onAddToCart;
 
   const DetailBarangPage({
     super.key,
     required this.barang,
+    required this.onAddToCart,
   });
 
   @override
+  State<DetailBarangPage> createState() => _DetailBarangPageState();
+}
+
+class _DetailBarangPageState extends State<DetailBarangPage> {
+  int jumlahDipilih = 1;
+
+  @override
   Widget build(BuildContext context) {
-    final bool stokHabis = barang.stok == 0;
-    final bool stokSedikit = barang.stok > 0 && barang.stok <= 5;
+    final bool stokHabis = widget.barang.stok == 0;
+    final bool stokSedikit = widget.barang.stok > 0 && widget.barang.stok <= 5;
+    final int stokTersisa =
+      (widget.barang.stok - (jumlahDipilih - 1))
+        .clamp(0, widget.barang.stok);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF061B12),
+      backgroundColor: stokHabis
+          ? const Color(0xFF343A40)
+          : const Color(0xFF061B12),
 
       body: Stack(
         children: [
@@ -23,22 +38,30 @@ class DetailBarangPage extends StatelessWidget {
           // BACKGROUND PREMIUM
           // ============================================================
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF03150D),
-                  Color(0xFF073A25),
-                  Color(0xFF0B5A37),
-                  Color(0xFF031B12),
-                ],
+                colors: stokHabis
+                    ? const [
+                        Color(0xFF252A2F),
+                        Color(0xFF4A5158),
+                        Color(0xFF737B83),
+                        Color(0xFF252A2F),
+                      ]
+                    : const [
+                        Color(0xFF03150D),
+                        Color(0xFF073A25),
+                        Color(0xFF0B5A37),
+                        Color(0xFF031B12),
+                      ],
               ),
             ),
           ),
 
           // Glow atas
-          Positioned(
+          if (!stokHabis)
+            Positioned(
             top: -120,
             right: -90,
             child: _GlowCircle(
@@ -48,7 +71,8 @@ class DetailBarangPage extends StatelessWidget {
           ),
 
           // Glow kiri
-          Positioned(
+          if (!stokHabis)
+            Positioned(
             top: 300,
             left: -140,
             child: _GlowCircle(
@@ -154,6 +178,7 @@ class DetailBarangPage extends StatelessWidget {
                         _buildStockCard(
                           stokHabis,
                           stokSedikit,
+                          stokTersisa,
                         ),
 
                         const SizedBox(height: 14),
@@ -161,14 +186,52 @@ class DetailBarangPage extends StatelessWidget {
                         // ==================================================
                         // PRODUCT INFORMATION
                         // ==================================================
-                        _buildInformationCard(),
+                        _buildInformationCard(stokHabis),
 
                         const SizedBox(height: 18),
 
-                        // ==================================================
-                        // BUTTON
-                        // ==================================================
-                        _buildActionButton(
+                        if (!stokHabis)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.16),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Pilih jumlah',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                PemilihJumlah(
+                                  stok: widget.barang.stok,
+                                  harga: widget.barang.harga,
+                                  onChanged: (jumlah) {
+                                    setState(() {
+                                      jumlahDipilih = jumlah;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        const SizedBox(height: 18),
+
+                        _buildCartCard(
                           context,
                           stokHabis,
                         ),
@@ -196,18 +259,31 @@ class DetailBarangPage extends StatelessWidget {
       height: 330,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFB9F7D2),
-            Color(0xFF58D895),
-            Color(0xFF16834B),
-          ],
-        ),
+        gradient: stokHabis
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF9AA1A8),
+                  Color(0xFF626A72),
+                  Color(0xFF3F464D),
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFB9F7D2),
+                  Color(0xFF58D895),
+                  Color(0xFF16834B),
+                ],
+              ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF21D477).withOpacity(0.20),
+            color: (stokHabis
+                ? const Color(0xFF5A626A)
+                : const Color(0xFF21D477))
+              .withOpacity(0.20),
             blurRadius: 35,
             spreadRadius: 2,
             offset: const Offset(0, 15),
@@ -218,13 +294,12 @@ class DetailBarangPage extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF153F2C),
-              Color(0xFF09291C),
-            ],
+            colors: stokHabis
+                ? const [Color(0xFF343A40), Color(0xFF555D65)]
+                : const [Color(0xFF153F2C), Color(0xFF09291C)],
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -252,7 +327,10 @@ class DetailBarangPage extends StatelessWidget {
                 height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF20D477).withOpacity(0.06),
+                    color: (stokHabis
+                        ? const Color(0xFFD5D9DD)
+                        : const Color(0xFF20D477))
+                      .withOpacity(0.06),
                 ),
               ),
             ),
@@ -262,7 +340,7 @@ class DetailBarangPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Image.network(
-                  barang.gambar,
+                  widget.barang.gambar,
                   fit: BoxFit.contain,
 
                   loadingBuilder: (
@@ -322,7 +400,10 @@ class DetailBarangPage extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.28),
+                    color: (stokHabis
+                        ? const Color(0xFF20252A)
+                        : Colors.black)
+                      .withOpacity(0.28),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.12),
@@ -331,14 +412,16 @@ class DetailBarangPage extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.eco_rounded,
                       size: 15,
-                      color: Color(0xFF7CF4AA),
+                      color: stokHabis
+                          ? const Color(0xFFE1E5E8)
+                          : const Color(0xFF7CF4AA),
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      barang.kategori.toUpperCase(),
+                      widget.barang.kategori.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -358,10 +441,10 @@ class DetailBarangPage extends StatelessWidget {
                 right: 18,
                 child: _statusBadge(
                   'STOK HABIS',
-                  Colors.red,
+                  const Color(0xFF687078),
                 ),
               )
-            else if (barang.stok <= 5)
+            else if (widget.barang.stok <= 5)
               Positioned(
                 top: 18,
                 right: 18,
@@ -393,11 +476,17 @@ class DetailBarangPage extends StatelessWidget {
     bool stokHabis,
     bool stokSedikit,
   ) {
+    final int stokTersisa =
+      (widget.barang.stok - (jumlahDipilih - 1))
+        .clamp(0, widget.barang.stok);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B281B).withOpacity(0.94),
+        color: stokHabis
+            ? const Color(0xFF4A5158)
+            : const Color(0xFF0B281B).withOpacity(0.94),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: Colors.white.withOpacity(0.08),
@@ -414,7 +503,7 @@ class DetailBarangPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            barang.nama,
+            widget.barang.nama,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 25,
@@ -430,9 +519,11 @@ class DetailBarangPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Rp${barang.harga}',
-                style: const TextStyle(
-                  color: Color(0xFF67E89D),
+                'Rp${widget.barang.harga}',
+                style: TextStyle(
+                  color: stokHabis
+                      ? const Color(0xFFE1E5E8)
+                      : const Color(0xFF67E89D),
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
@@ -442,7 +533,7 @@ class DetailBarangPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 3),
                 child: Text(
-                  '/ ${barang.satuan}',
+                  '/ ${widget.barang.satuan}',
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -468,7 +559,7 @@ class DetailBarangPage extends StatelessWidget {
                 child: _miniInfo(
                   Icons.category_rounded,
                   'Kategori',
-                  barang.kategori,
+                  widget.barang.kategori,
                 ),
               ),
               const SizedBox(width: 10),
@@ -478,7 +569,7 @@ class DetailBarangPage extends StatelessWidget {
                   'Stok',
                   stokHabis
                       ? 'Habis'
-                      : '${barang.stok} unit',
+                      : '$stokTersisa ${widget.barang.satuanStok}',
                 ),
               ),
             ],
@@ -494,22 +585,27 @@ class DetailBarangPage extends StatelessWidget {
   Widget _buildStockCard(
     bool stokHabis,
     bool stokSedikit,
+    int stokTersisa,
   ) {
-    final Color statusColor = stokHabis
+    final bool stokTersisaHabis = stokHabis || stokTersisa <= 0;
+    final bool stokTersisaSedikit =
+      !stokTersisaHabis && stokTersisa <= 5;
+
+    final Color statusColor = stokTersisaHabis
         ? Colors.redAccent
-        : stokSedikit
+      : stokTersisaSedikit
             ? const Color(0xFFFFB13B)
             : const Color(0xFF2FE08A);
 
-    final String statusText = stokHabis
+    final String statusText = stokTersisaHabis
         ? 'Stok sedang kosong'
-        : stokSedikit
+      : stokTersisaSedikit
             ? 'Stok hampir habis'
             : 'Stok tersedia';
 
-    final IconData icon = stokHabis
+    final IconData icon = stokTersisaHabis
         ? Icons.remove_shopping_cart_rounded
-        : stokSedikit
+      : stokTersisaSedikit
             ? Icons.warning_amber_rounded
             : Icons.check_circle_rounded;
 
@@ -518,9 +614,13 @@ class DetailBarangPage extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(23),
-        color: statusColor.withOpacity(0.09),
+        color: stokTersisaHabis
+          ? const Color(0xFF5B636B)
+          : statusColor.withOpacity(0.09),
         border: Border.all(
-          color: statusColor.withOpacity(0.18),
+            color: stokTersisaHabis
+              ? const Color(0xFFAEB5BB)
+              : statusColor.withOpacity(0.18),
         ),
       ),
       child: Row(
@@ -555,11 +655,13 @@ class DetailBarangPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  stokHabis
+                    stokTersisaHabis
                       ? 'Silakan cek kembali nanti.'
-                      : '${barang.stok} ${barang.satuan.toLowerCase()} tersedia',
-                  style: const TextStyle(
-                    color: Colors.white54,
+                      : '$stokTersisa ${widget.barang.satuanStok.toLowerCase()} tersedia',
+                  style: TextStyle(
+                    color: stokTersisaHabis
+                        ? const Color(0xFFD4D8DC)
+                        : Colors.white54,
                     fontSize: 11,
                   ),
                 ),
@@ -574,12 +676,18 @@ class DetailBarangPage extends StatelessWidget {
   // ================================================================
   // INFORMATION CARD
   // ================================================================
-  Widget _buildInformationCard() {
+  Widget _buildInformationCard(bool stokHabis) {
+    final int stokTersisa =
+      (widget.barang.stok - (jumlahDipilih - 1))
+        .clamp(0, widget.barang.stok);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A2418),
+        color: stokHabis
+          ? const Color(0xFF424950)
+          : const Color(0xFF0A2418),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
           color: Colors.white.withOpacity(0.07),
@@ -588,11 +696,13 @@ class DetailBarangPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.info_outline_rounded,
-                color: Color(0xFF65E99D),
+                color: stokHabis
+                  ? const Color(0xFFE1E5E8)
+                  : const Color(0xFF65E99D),
                 size: 21,
               ),
               SizedBox(width: 8),
@@ -611,27 +721,27 @@ class DetailBarangPage extends StatelessWidget {
 
           _infoRow(
             'Nama Produk',
-            barang.nama,
+            widget.barang.nama,
           ),
 
           _infoRow(
             'Kategori',
-            barang.kategori,
+            widget.barang.kategori,
           ),
 
           _infoRow(
             'Satuan',
-            barang.satuan,
+            widget.barang.satuan,
           ),
 
           _infoRow(
             'Harga',
-            'Rp${barang.harga}',
+            'Rp${widget.barang.harga}',
           ),
 
           _infoRow(
             'Stok',
-            '${barang.stok} unit',
+            '$stokTersisa ${widget.barang.satuanStok}',
             last: true,
           ),
         ],
@@ -640,8 +750,117 @@ class DetailBarangPage extends StatelessWidget {
   }
 
   // ================================================================
-  // ACTION BUTTON
+  // CART CARD
   // ================================================================
+  Widget _buildCartCard(
+    BuildContext context,
+    bool stokHabis,
+  ) {
+    final subtotal = jumlahDipilih * widget.barang.harga;
+    final diskonPersen = jumlahDipilih >= 25
+        ? 10
+        : jumlahDipilih >= 10
+            ? 5
+            : 0;
+    final total = subtotal - (subtotal * diskonPersen ~/ 100);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: stokHabis
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF4A5158), Color(0xFF666E76)],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF123D3A), Color(0xFF176B61)],
+              ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+            color: stokHabis
+              ? const Color(0xFFB3BAC1)
+              : const Color(0xFF62D1A5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: stokHabis
+              ? const Color(0xFF252A2F).withValues(alpha: 0.35)
+              : const Color(0xFF031B18).withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.shopping_cart_rounded,
+                color: stokHabis
+                  ? const Color(0xFFE1E5E8)
+                  : const Color(0xFFFFD166),
+                size: 22,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Masukkan ke Keranjang',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$jumlahDipilih ${widget.barang.satuan.toLowerCase()}',
+                style: const TextStyle(
+                  color: Color(0xFFD2F2E8),
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                'Rp${_formatHarga(total)}',
+                style: TextStyle(
+                  color: stokHabis
+                      ? const Color(0xFFE1E5E8)
+                      : const Color(0xFFFFD166),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          if (diskonPersen > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Diskon $diskonPersen% diterapkan',
+              style: TextStyle(
+                color: stokHabis
+                    ? const Color(0xFFD4D8DC)
+                    : const Color(0xFFB8F0D7),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          _buildActionButton(context, stokHabis),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButton(
     BuildContext context,
     bool stokHabis,
@@ -653,6 +872,11 @@ class DetailBarangPage extends StatelessWidget {
         onPressed: stokHabis
             ? null
             : () {
+                final jumlahDibeli = jumlahDipilih;
+                widget.onAddToCart(jumlahDibeli);
+                setState(() {
+                  jumlahDipilih = 1;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: const Color(0xFF16834B),
@@ -669,7 +893,7 @@ class DetailBarangPage extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            '${barang.nama} tersedia ${barang.stok} unit.',
+                            '${widget.barang.nama} tersedia $jumlahDibeli ${widget.barang.satuan.toLowerCase()}.',
                           ),
                         ),
                       ],
@@ -678,10 +902,14 @@ class DetailBarangPage extends StatelessWidget {
                 );
               },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF24D37D),
-          disabledBackgroundColor: Colors.white12,
-          foregroundColor: const Color(0xFF032016),
-          disabledForegroundColor: Colors.white30,
+            backgroundColor: stokHabis
+              ? const Color(0xFF687078)
+              : const Color(0xFF24D37D),
+            disabledBackgroundColor: const Color(0xFF687078),
+            foregroundColor: stokHabis
+              ? const Color(0xFFE1E5E8)
+              : const Color(0xFF032016),
+            disabledForegroundColor: const Color(0xFFD4D8DC),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(19),
@@ -699,7 +927,7 @@ class DetailBarangPage extends StatelessWidget {
             Text(
               stokHabis
                   ? 'Stok Habis'
-                  : 'Produk Tersedia',
+                  : 'Masukkan ke Keranjang',
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
@@ -709,6 +937,20 @@ class DetailBarangPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatHarga(int harga) {
+    final text = harga.toString();
+    final buffer = StringBuffer();
+
+    for (int index = 0; index < text.length; index++) {
+      if (index > 0 && (text.length - index) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(text[index]);
+    }
+
+    return buffer.toString();
   }
 
   // ================================================================

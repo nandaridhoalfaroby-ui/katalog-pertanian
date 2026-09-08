@@ -79,13 +79,16 @@ class BarangTaniCard extends StatelessWidget {
                   ),
                 )
               else
-                Text('Stok Tersedia: ${barang.stok}'),
+                Text(
+                  'Stok Tersedia: ${barang.stok} ${barang.satuanStok}',
+                ),
 
               const Spacer(),
 
               if (!stokHabis)
                 PemilihJumlah(
                   stok: barang.stok,
+                  harga: barang.harga,
                   onChanged: (_) {},
                 )
               else

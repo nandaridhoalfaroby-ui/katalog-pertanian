@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:katalog_tani/widgets/detail_barang_page.dart';
 
 import 'models/barang_tani.dart';
-import 'pages/detail_barang_page.dart';
 
 void main() {
   runApp(const TaniMartApp());
@@ -41,9 +40,13 @@ class KatalogPage extends StatefulWidget {
 }
 
 class _KatalogPageState extends State<KatalogPage> {
-  late final TextEditingController searchController;
+  late final TextEditingController searchControllerBeranda;
+  late final TextEditingController searchControllerProduk;
+  late final FocusNode searchFocusNodeBeranda;
+  late final FocusNode searchFocusNodeProduk;
 
-  String kataKunci = '';
+  String kataKunciBeranda = '';
+  String kataKunciProduk = '';
   String kategoriAktif = 'Semua';
 
   bool hargaNaik = true;
@@ -51,6 +54,7 @@ class _KatalogPageState extends State<KatalogPage> {
   int bottomIndex = 0;
 
   final Set<String> favorit = {};
+  final Map<String, int> keranjang = {};
 
   // Simulasi notifikasi
   final List<Map<String, String>> notifikasi = [
@@ -81,51 +85,57 @@ class _KatalogPageState extends State<KatalogPage> {
       kategori: 'Bibit',
       harga: 12000,
       satuan: 'Bungkus',
+      satuanStok: 'Bungkus',
       gambar:
           'https://i.ibb.co.com/FqnjQhkB/Chat-GPT-Image-Sep-1-2026-10-46-36-AM.png',
-      stok: 18,
+      stok: 324,
     ),
     BarangTani(
       nama: 'Benih Terong Ungu',
       kategori: 'Bibit',
       harga: 13500,
       satuan: 'Bungkus',
+      satuanStok: 'Bungkus',
       gambar:
           'https://i.ibb.co.com/qLBxryWr/Chat-GPT-Image-Sep-1-2026-11-33-10-AM.png',
-      stok: 7,
+      stok: 49,
     ),
     BarangTani(
       nama: 'Pupuk Organik Granul',
       kategori: 'Pupuk',
       harga: 28000,
       satuan: 'Karung',
+      satuanStok: 'Karung',
       gambar:
           'https://i.ibb.co.com/V0FLDH0B/Chat-GPT-Image-Sep-1-2026-11-03-38-AM.png',
-      stok: 12,
+      stok: 144,
     ),
     BarangTani(
       nama: 'Pupuk NPK Daun Hijau',
       kategori: 'Pupuk',
       harga: 42000,
-      satuan: 'Karung',
+      satuan: 'karung',
+      satuanStok: 'Karung',
       gambar:
           'https://i.ibb.co.com/SDBhcKbX/Chat-GPT-Image-Sep-1-2026-11-36-01-AM.png',
-      stok: 4,
+      stok:256,
     ),
     BarangTani(
       nama: 'Sekop Tangan Baja',
       kategori: 'Alat',
       harga: 32000,
       satuan: 'Buah',
+      satuanStok: 'Buah',
       gambar:
           'https://i.ibb.co.com/vxZJxHhZ/Chat-GPT-Image-Sep-1-2026-11-37-21-AM.png',
-      stok: 9,
+      stok: 6561,
     ),
     BarangTani(
       nama: 'Gunting Pangkas Premium',
       kategori: 'Alat',
       harga: 47000,
       satuan: 'Buah',
+      satuanStok: 'Buah',
       gambar:
           'https://i.ibb.co.com/Wp3FSPsg/Chat-GPT-Image-Sep-1-2026-11-41-35-AM.png',
       stok: 0,
@@ -135,18 +145,20 @@ class _KatalogPageState extends State<KatalogPage> {
       kategori: 'Alat',
       harga: 65000,
       satuan: 'Buah',
+      satuanStok: 'Buah',
       gambar:
           'https://i.ibb.co.com/VcNDJSQD/Chat-GPT-Image-Sep-1-2026-11-43-43-AM.png',
-      stok: 6,
+      stok: 1296,
     ),
     BarangTani(
       nama: 'Benih Melon Golden Harapan',
       kategori: 'Bibit',
       harga: 18500,
       satuan: 'Bungkus',
+      satuanStok: 'Bungkus',
       gambar:
           'https://i.ibb.co.com/Myf1W1Jg/Chat-GPT-Image-Sep-1-2026-11-46-01-AM.png',
-      stok: 25,
+      stok: 625,
     ),
   ];
 
@@ -158,18 +170,18 @@ class _KatalogPageState extends State<KatalogPage> {
   void initState() {
     super.initState();
 
-    searchController = TextEditingController();
-
-    searchController.addListener(() {
-      setState(() {
-        kataKunci = searchController.text.toLowerCase().trim();
-      });
-    });
+    searchControllerBeranda = TextEditingController();
+    searchControllerProduk = TextEditingController();
+    searchFocusNodeBeranda = FocusNode();
+    searchFocusNodeProduk = FocusNode();
   }
 
   @override
   void dispose() {
-    searchController.dispose();
+    searchControllerBeranda.dispose();
+    searchControllerProduk.dispose();
+    searchFocusNodeBeranda.dispose();
+    searchFocusNodeProduk.dispose();
     super.dispose();
   }
 
@@ -178,6 +190,10 @@ class _KatalogPageState extends State<KatalogPage> {
   // ============================================================
 
   List<BarangTani> get barangTersaring {
+    final kataKunci = bottomIndex == 1
+      ? kataKunciProduk
+      : kataKunciBeranda;
+
     final hasil = semuaBarang.where((barang) {
       final cocokNama =
           barang.nama.toLowerCase().contains(kataKunci);
@@ -197,6 +213,13 @@ class _KatalogPageState extends State<KatalogPage> {
 
     hasil.sort(
       (a, b) {
+        final aHabis = a.stok == 0;
+        final bHabis = b.stok == 0;
+
+        if (aHabis != bHabis) {
+          return aHabis ? 1 : -1;
+        }
+
         return hargaNaik
             ? a.harga.compareTo(b.harga)
             : b.harga.compareTo(a.harga);
@@ -207,9 +230,18 @@ class _KatalogPageState extends State<KatalogPage> {
   }
 
   List<BarangTani> get barangFavorit {
-    return semuaBarang
+    final hasil = semuaBarang
         .where((barang) => favorit.contains(barang.nama))
         .toList();
+
+    hasil.sort((a, b) {
+      if ((a.stok == 0) != (b.stok == 0)) {
+        return a.stok == 0 ? 1 : -1;
+      }
+      return a.harga.compareTo(b.harga);
+    });
+
+    return hasil;
   }
 
   int hitungTotalStok() {
@@ -355,7 +387,7 @@ class _KatalogPageState extends State<KatalogPage> {
             ),
 
             SliverToBoxAdapter(
-              child: _buildSearchBar(),
+              child: _buildSearchBar(isProductPage: false),
             ),
 
             SliverToBoxAdapter(
@@ -486,6 +518,49 @@ class _KatalogPageState extends State<KatalogPage> {
                 clipBehavior: Clip.none,
                 children: [
                   InkWell(
+                    borderRadius: BorderRadius.circular(30),
+                    onTap: _showCartSheet,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.shopping_cart_outlined,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  if (keranjang.isNotEmpty)
+                    Positioned(
+                      top: -2,
+                      right: 7,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFD166),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${keranjang.values.fold<int>(0, (total, jumlah) => total + jumlah)}',
+                          style: const TextStyle(
+                            color: Color(0xFF5A3410),
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  InkWell(
                     borderRadius:
                         BorderRadius.circular(30),
                     onTap: () {
@@ -603,7 +678,17 @@ class _KatalogPageState extends State<KatalogPage> {
   // SEARCH
   // ============================================================
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar({required bool isProductPage}) {
+    final controller = isProductPage
+        ? searchControllerProduk
+        : searchControllerBeranda;
+    final focusNode = isProductPage
+        ? searchFocusNodeProduk
+        : searchFocusNodeBeranda;
+    final kataKunci = isProductPage
+        ? kataKunciProduk
+        : kataKunciBeranda;
+
     return Transform.translate(
       offset: const Offset(0, 5),
       child: Padding(
@@ -613,13 +698,12 @@ class _KatalogPageState extends State<KatalogPage> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [
-                Color(0xFF0D6B52),
-                Color(0xFF239B82),
-              ],
+              colors: isProductPage
+                  ? const [Color(0xFF243B72), Color(0xFF4169A1)]
+                  : const [Color(0xFF0D6B52), Color(0xFF239B82)],
             ),
             borderRadius:
                 BorderRadius.circular(19),
@@ -632,41 +716,91 @@ class _KatalogPageState extends State<KatalogPage> {
             ],
           ),
           child: TextField(
-            controller: searchController,
+            controller: controller,
+            focusNode: focusNode,
+            enabled: true,
+            readOnly: false,
+            showCursor: true,
+            enableInteractiveSelection: true,
+            autocorrect: false,
+            enableSuggestions: true,
+            keyboardType: TextInputType.text,
+            textCapitalization: TextCapitalization.none,
             textInputAction:
                 TextInputAction.search,
+            onChanged: (value) {
+              setState(() {
+                if (isProductPage) {
+                  kataKunciProduk = value.toLowerCase().trim();
+                } else {
+                  kataKunciBeranda = value.toLowerCase().trim();
+                }
+              });
+            },
+            onTap: () {
+              FocusScope.of(context).requestFocus(focusNode);
+            },
+            onTapOutside: (_) {
+              focusNode.unfocus();
+            },
+            onSubmitted: (_) {
+              focusNode.unfocus();
+            },
+            cursorColor: const Color(0xFFFFD166),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
-              hintText:
-                  'Cari bibit, pupuk, alat...',
+                hintText: isProductPage
+                  ? 'Cari di semua produk...'
+                  : 'Cari di beranda...',
               hintStyle: const TextStyle(
                 color: Color(0xFFD7F4E5),
                 fontSize: 13,
               ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Color(0xFFFFD166),
+              prefixIcon: IconButton(
+                onPressed: () {
+                  focusNode.requestFocus();
+                },
+                tooltip: 'Cari barang',
+                icon: const Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFFFFD166),
+                ),
               ),
-              suffixIcon:
-                  kataKunci.isNotEmpty
-                      ? IconButton(
-                          onPressed: () {
-                            searchController
-                                .clear();
-                          },
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.tune_rounded,
-                          color: Color(0xFFFFD166),
-                        ),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (kataKunci.isNotEmpty)
+                    IconButton(
+                      onPressed: () {
+                        controller.clear();
+                        setState(() {
+                          if (isProductPage) {
+                            kataKunciProduk = '';
+                          } else {
+                            kataKunciBeranda = '';
+                          }
+                        });
+                      },
+                      tooltip: 'Hapus pencarian',
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  IconButton(
+                    onPressed: _showFilterSheet,
+                    tooltip: 'Buka filter',
+                    icon: const Icon(
+                      Icons.tune_rounded,
+                      color: Color(0xFFFFD166),
+                    ),
+                  ),
+                ],
+              ),
               border: InputBorder.none,
               contentPadding:
                   const EdgeInsets.symmetric(
@@ -676,6 +810,97 @@ class _KatalogPageState extends State<KatalogPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF123D3A),
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.62,
+          minChildSize: 0.42,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return SafeArea(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    'Filter produk',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const Text(
+                  'Kategori',
+                  style: TextStyle(
+                    color: Color(0xFFBDE8D7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                ...['Semua', 'Bibit', 'Pupuk', 'Alat'].map(
+                  (kategori) => RadioListTile<String>(
+                    value: kategori,
+                    groupValue: kategoriAktif,
+                    activeColor: const Color(0xFFFFD166),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      kategori,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        kategoriAktif = value;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                const Divider(color: Color(0x557AD6B5)),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.swap_vert_rounded,
+                    color: Color(0xFFFFD166),
+                  ),
+                  title: const Text(
+                    'Urutkan harga',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    hargaNaik ? 'Termurah ke termahal' : 'Termahal ke termurah',
+                    style: const TextStyle(color: Color(0xFFBDE8D7)),
+                  ),
+                  trailing: Switch(
+                    value: hargaNaik,
+                    activeColor: const Color(0xFFFFD166),
+                    onChanged: (value) {
+                      setState(() {
+                        hargaNaik = value;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1145,6 +1370,9 @@ class _KatalogPageState extends State<KatalogPage> {
               builder: (context) =>
                   DetailBarangPage(
                 barang: barang,
+                onAddToCart: (jumlah) {
+                  _tambahKeKeranjang(barang, jumlah);
+                },
               ),
             ),
           );
@@ -1153,23 +1381,36 @@ class _KatalogPageState extends State<KatalogPage> {
           padding:
               const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF104F43),
-                Color(0xFF167D6A),
-                Color(0xFF239C7D),
-              ],
-            ),
+            gradient: stokHabis
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF4A5158),
+                      Color(0xFF737B83),
+                    ],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF104F43),
+                      Color(0xFF167D6A),
+                      Color(0xFF239C7D),
+                    ],
+                  ),
             borderRadius:
                 BorderRadius.circular(23),
             border: Border.all(
-              color: const Color(0xFF62D1A5),
+                color: stokHabis
+                  ? const Color(0xFFB3BAC1)
+                  : const Color(0xFF62D1A5),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF064438).withValues(alpha: 0.35),
+                color: stokHabis
+                  ? const Color(0xFF252A2F).withValues(alpha: 0.35)
+                  : const Color(0xFF064438).withValues(alpha: 0.35),
                 blurRadius: 22,
                 offset:
                     const Offset(0, 8),
@@ -1529,46 +1770,52 @@ class _KatalogPageState extends State<KatalogPage> {
             icon: Icons.inventory_2_rounded,
             title: 'Semua Produk',
             subtitle:
-                '${semuaBarang.length} produk tersedia',
+                '${barangTersaring.length} produk ditemukan',
           ),
         ),
 
         SliverToBoxAdapter(
-          child: _buildSearchBar(),
+          child: _buildSearchBar(isProductPage: true),
         ),
 
         SliverToBoxAdapter(
           child: _buildCategorySection(),
         ),
 
-        SliverPadding(
-          padding:
-              const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            30,
-          ),
-          sliver: SliverList(
-            delegate:
-                SliverChildBuilderDelegate(
-              (context, index) {
-                return Padding(
-                  padding:
-                      const EdgeInsets.only(
-                    bottom: 14,
-                  ),
-                  child:
-                      _buildPremiumProductCard(
-                    barangTersaring[index],
-                  ),
-                );
-              },
-              childCount:
-                  barangTersaring.length,
+        if (barangTersaring.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _tampilanKosong(),
+          )
+        else
+          SliverPadding(
+            padding:
+                const EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              30,
+            ),
+            sliver: SliverList(
+              delegate:
+                  SliverChildBuilderDelegate(
+                (context, index) {
+                  return Padding(
+                    padding:
+                        const EdgeInsets.only(
+                      bottom: 14,
+                    ),
+                    child:
+                        _buildPremiumProductCard(
+                      barangTersaring[index],
+                    ),
+                  );
+                },
+                childCount:
+                    barangTersaring.length,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1736,284 +1983,295 @@ class _KatalogPageState extends State<KatalogPage> {
       ],
     );
   }
+// ============================================================
+// ACCOUNT PAGE
+// ============================================================
 
-  // ============================================================
-  // ACCOUNT PAGE
-  // ============================================================
-
-  Widget _buildAccountPage() {
-    return Stack(
-      clipBehavior: Clip.hardEdge,
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF102A43),
-                  Color(0xFF155E63),
-                  Color(0xFFB8782C),
-                ],
-                stops: [0.0, 0.58, 1.0],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 250,
-          right: -100,
-          child: IgnorePointer(
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF7ED6C2).withValues(alpha: 0.17),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: -130,
-          left: -90,
-          child: IgnorePointer(
-            child: Container(
-              width: 310,
-              height: 310,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFFD166).withValues(alpha: 0.18),
-              ),
-            ),
-          ),
-        ),
-        SingleChildScrollView(
-          physics:
-              const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-          Container(
-            width: double.infinity,
-            padding:
-                const EdgeInsets.fromLTRB(
-              22,
-              25,
-              22,
-              30,
-            ),
-            decoration:
-                const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF064D2D),
-                  Color(0xFF16834B),
-                  Color(0xFF23A765),
-                ],
-              ),
-              borderRadius:
-                  BorderRadius.only(
-                bottomLeft:
-                    Radius.circular(32),
-                bottomRight:
-                    Radius.circular(32),
-              ),
-            ),
-            child: Column(
-              children: [
-                const CircleAvatar(
-                  radius: 43,
-                  backgroundColor:
-                      Colors.white,
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 50,
-                    color:
-                        Color(0xFF16834B),
-                  ),
-                ),
-
-                const SizedBox(
-                    height: 13),
-
-                const Text(
-                  'Pengguna TaniMart',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight:
-                        FontWeight.w900,
-                  ),
-                ),
-
-                const SizedBox(
-                    height: 4),
-
-                const Text(
-                  'Petani • Pengguna TaniMart',
-                  style: TextStyle(
-                    color:
-                        Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
+Widget _buildAccountPage() {
+  return Stack(
+    fit: StackFit.expand,
+    clipBehavior: Clip.hardEdge,
+    children: [
+      // ============================================================
+      // FULL BACKGROUND AKUN
+      // ============================================================
+      Positioned.fill(
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF102A43),
+                Color(0xFF155E63),
+                Color(0xFFB8782C),
               ],
+              stops: [0.0, 0.58, 1.0],
             ),
           ),
+        ),
+      ),
 
-          const SizedBox(height: 20),
-
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 16,
+      // ============================================================
+      // DEKORASI KANAN
+      // ============================================================
+      Positioned(
+        top: 180,
+        right: -100,
+        child: IgnorePointer(
+          child: Container(
+            width: 280,
+            height: 280,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF7ED6C2).withValues(
+                alpha: 0.17,
+              ),
             ),
-            child: Column(
-              children: [
-                _accountMenu(
-                  icon:
-                      Icons.favorite_rounded,
-                  title: 'Produk Favorit',
-                  subtitle:
-                      '${favorit.length} produk tersimpan',
-                  onTap: () {
-                    setState(() {
-                      bottomIndex = 2;
-                    });
-                  },
-                ),
+          ),
+        ),
+      ),
 
-                _accountMenu(
-                  icon:
-                      Icons.notifications_rounded,
-                  title: 'Notifikasi',
-                  subtitle:
-                      '${notifikasi.length} pemberitahuan',
-                  onTap:
-                      _showNotificationPage,
-                ),
+      // ============================================================
+      // DEKORASI BAWAH
+      // ============================================================
+      Positioned(
+        bottom: -130,
+        left: -90,
+        child: IgnorePointer(
+          child: Container(
+            width: 310,
+            height: 310,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFD166).withValues(
+                alpha: 0.18,
+              ),
+            ),
+          ),
+        ),
+      ),
 
-                _accountMenu(
-                  icon:
-                      Icons.info_outline_rounded,
-                  title: 'Tentang TaniMart',
-                  subtitle:
-                      'Katalog sarana pertanian',
-                  onTap: () {
-                    _showAboutDialog();
-                  },
+      // ============================================================
+      // CONTENT
+      // ============================================================
+      SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // ========================================================
+            // HEADER AKUN
+            // ========================================================
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(
+                22,
+                25,
+                22,
+                30,
+              ),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF064D2D),
+                    Color(0xFF16834B),
+                    Color(0xFF23A765),
+                  ],
                 ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+              ),
+              child: Column(
+                children: [
+                  const CircleAvatar(
+                    radius: 43,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 50,
+                      color: Color(0xFF16834B),
+                    ),
+                  ),
 
-                _accountMenu(
-                  icon:
-                      Icons.settings_rounded,
-                  title: 'Pengaturan',
-                  subtitle:
-                      'Preferensi aplikasi',
-                  onTap: () {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Pengaturan TaniMart siap dikembangkan.',
+                  const SizedBox(height: 13),
+
+                  const Text(
+                    'Pengguna TaniMart',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    'Petani • Pengguna TaniMart',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ========================================================
+            // MENU AKUN
+            // ========================================================
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+              ),
+              child: Column(
+                children: [
+                  // PRODUK FAVORIT
+                  _accountMenu(
+                    icon: Icons.favorite_rounded,
+                    title: 'Produk Favorit',
+                    subtitle:
+                        '${favorit.length} produk tersimpan',
+                    onTap: () {
+                      setState(() {
+                        bottomIndex = 2;
+                      });
+                    },
+                  ),
+
+                  // NOTIFIKASI
+                  _accountMenu(
+                    icon: Icons.notifications_rounded,
+                    title: 'Notifikasi',
+                    subtitle:
+                        '${notifikasi.length} pemberitahuan',
+                    onTap: _showNotificationPage,
+                  ),
+
+                  // TENTANG TANIMART
+                  _accountMenu(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Tentang TaniMart',
+                    subtitle:
+                        'Katalog sarana pertanian',
+                    onTap: () {
+                      _showAboutDialog();
+                    },
+                  ),
+
+                  // PENGATURAN
+                  _accountMenu(
+                    icon: Icons.settings_rounded,
+                    title: 'Pengaturan',
+                    subtitle:
+                        'Preferensi aplikasi',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Pengaturan TaniMart siap dikembangkan.',
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _accountMenu({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin:
-          const EdgeInsets.only(bottom: 11),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFF173F52),
-            Color(0xFF1C6B6C),
+            // Ruang bawah agar menu terakhir tidak terlalu mepet
+            const SizedBox(height: 100),
           ],
         ),
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF5EBBA8),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF061D2A).withValues(alpha: 0.28),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
+      ),
+    ],
+  );
+}
+
+// ============================================================
+// ACCOUNT MENU
+// ============================================================
+
+Widget _accountMenu({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required VoidCallback onTap,
+}) {
+  return Container(
+    margin: const EdgeInsets.only(
+      bottom: 11,
+    ),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          Color(0xFF173F52),
+          Color(0xFF1C6B6C),
         ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 4,
-        ),
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFD166),
-            borderRadius:
-                BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: const Color(0xFF5EBBA8),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF061D2A).withValues(
+            alpha: 0.28,
           ),
-          child: Icon(
-            icon,
-            color: const Color(0xFF713F12),
-            size: 21,
-          ),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
         ),
-        title: Text(
-          title,
-          style:
-              const TextStyle(
-            fontWeight:
-                FontWeight.w800,
-            fontSize: 13,
-            color: Colors.white,
-          ),
+      ],
+    ),
+    child: ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 4,
+      ),
+      leading: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFD166),
+          borderRadius: BorderRadius.circular(13),
         ),
-        subtitle: Text(
-          subtitle,
-          style:
-              const TextStyle(
-            fontSize: 10,
-            color:
-              Color(0xFFD2F2E8),
-          ),
-        ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color:
-              Color(0xFFFFD166),
+        child: Icon(
+          icon,
+          color: const Color(0xFF713F12),
+          size: 21,
         ),
       ),
-    );
-  }
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+          color: Colors.white,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(
+          fontSize: 10,
+          color: Color(0xFFD2F2E8),
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Color(0xFFFFD166),
+      ),
+    ),
+  );
+}
 
   // ============================================================
   // SIMPLE HEADER
@@ -2108,6 +2366,206 @@ class _KatalogPageState extends State<KatalogPage> {
   // NOTIFICATION
   // ============================================================
 
+  void _tambahKeKeranjang(BarangTani barang, int jumlah) {
+    if (jumlah <= 0 || barang.stok <= 0) {
+      return;
+    }
+
+    final jumlahValid = jumlah.clamp(1, barang.stok);
+
+    setState(() {
+      final jumlahLama = keranjang[barang.nama] ?? 0;
+      keranjang[barang.nama] = jumlahLama + jumlahValid;
+      barang.stok -= jumlahValid;
+    });
+  }
+
+  void _showCartSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF102A43),
+      showDragHandle: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final items = semuaBarang
+                .where((barang) => (keranjang[barang.nama] ?? 0) > 0)
+                .toList();
+            final totalJumlah = items.fold<int>(
+              0,
+              (total, barang) => total + (keranjang[barang.nama] ?? 0),
+            );
+            final subtotal = items.fold<int>(
+              0,
+              (total, barang) =>
+                  total + barang.harga * (keranjang[barang.nama] ?? 0),
+            );
+            final diskonPersen = totalJumlah >= 25
+                ? 10
+                : totalJumlah >= 10
+                    ? 5
+                    : 0;
+            final diskon = subtotal * diskonPersen ~/ 100;
+
+            return SafeArea(
+              child: DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.65,
+                minChildSize: 0.35,
+                maxChildSize: 0.92,
+                builder: (context, scrollController) {
+                  return ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    children: [
+                      const Text(
+                        'Keranjang Belanja',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (items.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 48),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.shopping_cart_outlined,
+                                color: Color(0xFFFFD166),
+                                size: 56,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Keranjang masih kosong',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else ...[
+                        ...items.map(
+                          (barang) {
+                            final jumlah = keranjang[barang.nama] ?? 0;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF155E63),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFF5EBBA8),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          barang.nama,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '$jumlah x Rp${_formatHarga(barang.harga)}',
+                                          style: const TextStyle(
+                                            color: Color(0xFFFFD166),
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      final jumlahDihapus =
+                                          keranjang[barang.nama] ?? 0;
+                                      setState(() {
+                                        barang.stok += jumlahDihapus;
+                                        keranjang.remove(barang.nama);
+                                      });
+                                      setSheetState(() {});
+                                    },
+                                    tooltip: 'Hapus dari keranjang',
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Color(0xFFFFB4C0),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        _cartPriceRow(
+                          'Subtotal',
+                          'Rp${_formatHarga(subtotal)}',
+                        ),
+                        _cartPriceRow(
+                          'Diskon $diskonPersen%',
+                          diskon == 0
+                              ? 'Belum tersedia'
+                              : '- Rp${_formatHarga(diskon)}',
+                        ),
+                        const Divider(color: Color(0x557AD6B5)),
+                        _cartPriceRow(
+                          'Total pembayaran',
+                          'Rp${_formatHarga(subtotal - diskon)}',
+                          emphasized: true,
+                        ),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _cartPriceRow(String label, String value, {bool emphasized = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: const Color(0xFFD2F2E8),
+              fontWeight: emphasized ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: const Color(0xFFFFD166),
+              fontSize: emphasized ? 16 : 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showNotificationPage() {
     Navigator.push(
       context,
@@ -2129,34 +2587,126 @@ class _KatalogPageState extends State<KatalogPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(22),
-          ),
-          title: const Row(
-            children: [
-              Icon(
-                Icons.eco_rounded,
-                color:
-                    Color(0xFF16834B),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF103F3A),
+                  Color(0xFF176B61),
+                  Color(0xFFB8782C),
+                ],
               ),
-              SizedBox(width: 8),
-              Text('TaniMart'),
-            ],
-          ),
-          content: const Text(
-            'TaniMart adalah aplikasi katalog sarana pertanian yang membantu pengguna melihat produk, harga, stok, dan informasi produk dengan lebih mudah.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(context),
-              child:
-                  const Text('Tutup'),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: const Color(0xFF74D6B2)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF061D2A).withValues(alpha: 0.45),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ],
             ),
-          ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFD166),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.eco_rounded,
+                      color: Color(0xFF315B35),
+                      size: 42,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'TaniMart',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Teman terbaik untuk kebun produktif',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFFFE7A5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Temukan bibit, pupuk, dan alat pertanian pilihan dalam satu katalog yang praktis, jelas, dan siap membantu setiap langkah kebunmu.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFE2F7EF),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: _AboutFeature(
+                          icon: Icons.search_rounded,
+                          label: 'Mudah dicari',
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: _AboutFeature(
+                          icon: Icons.inventory_2_rounded,
+                          label: 'Stok jelas',
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: _AboutFeature(
+                          icon: Icons.shopping_cart_rounded,
+                          label: 'Siap dibeli',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD166),
+                        foregroundColor: const Color(0xFF315B35),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: const Text(
+                        'Tutup',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -2224,10 +2774,18 @@ class _KatalogPageState extends State<KatalogPage> {
 
           ElevatedButton.icon(
             onPressed: () {
-              searchController.clear();
+              final controller = bottomIndex == 1
+                  ? searchControllerProduk
+                  : searchControllerBeranda;
+              controller.clear();
 
               setState(() {
                 kategoriAktif = 'Semua';
+                if (bottomIndex == 1) {
+                  kataKunciProduk = '';
+                } else {
+                  kataKunciBeranda = '';
+                }
               });
             },
             icon: const Icon(
@@ -2393,6 +2951,43 @@ class _KatalogPageState extends State<KatalogPage> {
     }
 
     return buffer.toString();
+  }
+}
+
+class _AboutFeature extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _AboutFeature({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: const Color(0xFFFFD166), size: 22),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
