@@ -283,7 +283,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
             color: (stokHabis
                 ? const Color(0xFF5A626A)
                 : const Color(0xFF21D477))
-              .withOpacity(0.20),
+              .withValues(alpha: 0.20),
             blurRadius: 35,
             spreadRadius: 2,
             offset: const Offset(0, 15),
@@ -314,7 +314,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
                 height: 190,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.045),
+                  color: Colors.white.withValues(alpha: 0.045),
                 ),
               ),
             ),
@@ -330,7 +330,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
                     color: (stokHabis
                         ? const Color(0xFFD5D9DD)
                         : const Color(0xFF20D477))
-                      .withOpacity(0.06),
+                      .withValues(alpha: 0.06),
                 ),
               ),
             ),
@@ -403,10 +403,10 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
                     color: (stokHabis
                         ? const Color(0xFF20252A)
                         : Colors.black)
-                      .withOpacity(0.28),
+                      .withValues(alpha: 0.28),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                   ),
                 ),
                 child: Row(
@@ -486,14 +486,14 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
       decoration: BoxDecoration(
         color: stokHabis
             ? const Color(0xFF4A5158)
-            : const Color(0xFF0B281B).withOpacity(0.94),
+            : const Color(0xFF0B281B).withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha: 0.08),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.22),
+            color: Colors.black.withValues(alpha: 0.22),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -548,7 +548,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
 
           Container(
             height: 1,
-            color: Colors.white.withOpacity(0.07),
+            color: Colors.white.withValues(alpha: 0.07),
           ),
 
           const SizedBox(height: 18),
@@ -616,11 +616,11 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
         borderRadius: BorderRadius.circular(23),
         color: stokTersisaHabis
           ? const Color(0xFF5B636B)
-          : statusColor.withOpacity(0.09),
+          : statusColor.withValues(alpha: 0.09),
         border: Border.all(
             color: stokTersisaHabis
               ? const Color(0xFFAEB5BB)
-              : statusColor.withOpacity(0.18),
+              : statusColor.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -629,7 +629,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.14),
+              color: statusColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
@@ -690,7 +690,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
           : const Color(0xFF0A2418),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color: Colors.white.withOpacity(0.07),
+          color: Colors.white.withValues(alpha: 0.07),
         ),
       ),
       child: Column(
@@ -964,7 +964,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.045),
+        color: Colors.white.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -1049,7 +1049,7 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
         if (!last)
           Container(
             height: 1,
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
           ),
       ],
     );
@@ -1068,11 +1068,11 @@ class _DetailBarangPageState extends State<DetailBarangPage> {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.90),
+        color: color.withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(11),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.25),
+            color: color.withValues(alpha: 0.25),
             blurRadius: 12,
           ),
         ],
@@ -1114,10 +1114,10 @@ class _GlassIconButton extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
-              color: Colors.white.withOpacity(0.10),
+              color: Colors.white.withValues(alpha: 0.10),
             ),
           ),
           child: Icon(
@@ -1151,10 +1151,10 @@ class _GlowCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.10),
+            color: color.withValues(alpha: 0.10),
             blurRadius: 100,
             spreadRadius: 30,
           ),

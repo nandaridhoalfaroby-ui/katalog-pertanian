@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:katalog_tani/widgets/detail_barang_page.dart';
-
 import 'models/barang_tani.dart';
-
 void main() {
   runApp(const TaniMartApp());
 }
-
 class TaniMartApp extends StatelessWidget {
   const TaniMartApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,14 +23,11 @@ class TaniMartApp extends StatelessWidget {
     );
   }
 }
-
 // ============================================================
 // KATALOG PAGE
 // ============================================================
-
 class KatalogPage extends StatefulWidget {
   const KatalogPage({super.key});
-
   @override
   State<KatalogPage> createState() => _KatalogPageState();
 }
@@ -475,7 +468,7 @@ class _KatalogPageState extends State<KatalogPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
+                  color: Colors.white.withValues(alpha: 0.14),
                   borderRadius:
                       BorderRadius.circular(16),
                 ),
@@ -525,7 +518,7 @@ class _KatalogPageState extends State<KatalogPage> {
                       height: 44,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.14),
+                        color: Colors.white.withValues(alpha: 0.14),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -571,7 +564,7 @@ class _KatalogPageState extends State<KatalogPage> {
                       height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white
-                            .withOpacity(0.14),
+                            .withValues(alpha: 0.14),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -643,7 +636,7 @@ class _KatalogPageState extends State<KatalogPage> {
             ),
             decoration: BoxDecoration(
               color: Colors.white
-                  .withOpacity(0.12),
+                  .withValues(alpha: 0.12),
               borderRadius:
                   BorderRadius.circular(14),
             ),
@@ -886,7 +879,7 @@ class _KatalogPageState extends State<KatalogPage> {
                   ),
                   trailing: Switch(
                     value: hargaNaik,
-                    activeColor: const Color(0xFFFFD166),
+                    activeThumbColor: const Color(0xFFFFD166),
                     onChanged: (value) {
                       setState(() {
                         hargaNaik = value;
@@ -965,7 +958,7 @@ class _KatalogPageState extends State<KatalogPage> {
                   const BouncingScrollPhysics(),
               itemCount: kategori.length,
               separatorBuilder:
-                  (_, __) =>
+                  (_, _) =>
                       const SizedBox(width: 9),
               itemBuilder:
                   (context, index) {
@@ -1443,150 +1436,64 @@ class _KatalogPageState extends State<KatalogPage> {
                   fit: StackFit.expand,
                   children: [
                     Image.network(
-                      barang.gambar,
-                      fit: BoxFit.cover,
+  barang.gambar,
+  fit: BoxFit.cover,
+  width: double.infinity,
+  height: double.infinity,
+  headers: const {
+    'User-Agent': 'Mozilla/5.0',
+  },
+  loadingBuilder: (
+    BuildContext context,
+    Widget child,
+    ImageChunkEvent? loadingProgress,
+  ) {
+    if (loadingProgress == null) {
+      return child;
+    }
 
-                      loadingBuilder:
-                          (
-                        context,
-                        child,
-                        loadingProgress,
-                      ) {
-                        if (loadingProgress ==
-                            null) {
-                          return child;
-                        }
-
-                        return const Center(
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(
-                              0xFF16834B,
-                            ),
-                          ),
-                        );
-                      },
-
-                      errorBuilder:
-                          (
-                        context,
-                        error,
-                        stackTrace,
-                      ) {
-                        return const Center(
-                          child: Icon(
-                            Icons
-                                .image_not_supported_rounded,
-                            size: 38,
-                            color:
-                                Colors.grey,
-                          ),
-                        );
-                      },
-                    ),
-
-                    if (stokHabis)
-                      Container(
-                        color: Colors.black
-                            .withOpacity(
-                          0.30,
-                        ),
-                      ),
-
-                    if (stokHabis)
-                      Positioned(
-                        left: 7,
-                        right: 7,
-                        bottom: 7,
-                        child: Container(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            vertical: 5,
-                          ),
-                          decoration:
-                              BoxDecoration(
-                            color: Colors
-                                .red
-                                .shade600,
-                            borderRadius:
-                                BorderRadius
-                                    .circular(
-                              8,
-                            ),
-                          ),
-                          child:
-                              const Text(
-                            'HABIS',
-                            textAlign:
-                                TextAlign.center,
-                            style:
-                                TextStyle(
-                              color:
-                                  Colors.white,
-                              fontSize: 9,
-                              fontWeight:
-                                  FontWeight
-                                      .w900,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    Positioned(
-                      top: 7,
-                      right: 7,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (isFavorit) {
-                              favorit.remove(
-                                barang.nama,
-                              );
-                            } else {
-                              favorit.add(
-                                barang.nama,
-                              );
-                            }
-                          });
-                        },
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration:
-                              BoxDecoration(
-                            color: isFavorit
-                                              ? const Color(0xFFFFDDE3)
-                                              : const Color(0xFFD8F2E5),
-                            border: Border.all(
-                              color: isFavorit
-                                  ? const Color(0xFFFFA8B5)
-                                  : const Color(0xFFD7E9DD),
-                            ),
-                            shape:
-                                BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isFavorit
-                                ? Icons
-                                    .favorite_rounded
-                                : Icons
-                                    .favorite_border_rounded,
-                            color: isFavorit
-                              ? const Color(0xFFE84A5F)
-                                : const Color(
-                                    0xFF16834B,
-                                  ),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return const Center(
+      child: CircularProgressIndicator(
+        strokeWidth: 2.5,
+        color: Color(0xFF16834B),
+      ),
+    );
+  },
+  errorBuilder: (
+    BuildContext context,
+    Object error,
+    StackTrace? stackTrace,
+  ) {
+    return Container(
+      color: const Color(0xFFEAF7EF),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.broken_image_rounded,
+              size: 38,
+              color: Color(0xFF8A938D),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Gambar tidak tersedia',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF6F7772),
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
               ),
-
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+              ),
+              ],
+          ),
+),
               const SizedBox(width: 13),
 
               // ==================================================
@@ -1651,12 +1558,16 @@ class _KatalogPageState extends State<KatalogPage> {
                           const SizedBox(
                               width: 5),
 
-                          const Icon(
-                            Icons
-                                .chevron_right_rounded,
-                            color:
-                                Color(0xFFB0B8B3),
-                            size: 19,
+                          IconButton(
+                            onPressed: () => setState(() {
+                              isFavorit ? favorit.remove(barang.nama) : favorit.add(barang.nama);
+                            }),
+                            tooltip: isFavorit ? 'Hapus dari favorit' : 'Tambah ke favorit',
+                            icon: Icon(
+                              isFavorit ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              color: isFavorit ? const Color(0xFFFFD166) : const Color(0xFFB0B8B3),
+                              size: 19,
+                            ),
                           ),
                         ],
                       ),
@@ -2316,7 +2227,7 @@ Widget _accountMenu({
             height: 48,
             decoration: BoxDecoration(
               color: Colors.white
-                  .withOpacity(0.15),
+                  .withValues(alpha: 0.15),
               borderRadius:
                   BorderRadius.circular(15),
             ),
@@ -2371,7 +2282,7 @@ Widget _accountMenu({
       return;
     }
 
-    final jumlahValid = jumlah.clamp(1, barang.stok);
+    final jumlahValid = jumlah.clamp(1, barang.stok).toInt();
 
     setState(() {
       final jumlahLama = keranjang[barang.nama] ?? 0;
