@@ -76,7 +76,7 @@ class _KatalogPageState extends State<KatalogPage> {
     BarangTani(
       nama: 'Benih Tomat Mutiara',
       kategori: 'Bibit',
-      harga: 12000,
+      harga: 24000,
       satuan: 'Bungkus',
       satuanStok: 'Bungkus',
       gambar:
@@ -86,7 +86,7 @@ class _KatalogPageState extends State<KatalogPage> {
     BarangTani(
       nama: 'Benih Terong Ungu',
       kategori: 'Bibit',
-      harga: 13500,
+      harga: 27000,
       satuan: 'Bungkus',
       satuanStok: 'Bungkus',
       gambar:
@@ -96,7 +96,7 @@ class _KatalogPageState extends State<KatalogPage> {
     BarangTani(
       nama: 'Pupuk Organik Granul',
       kategori: 'Pupuk',
-      harga: 28000,
+      harga: 56000,
       satuan: 'Karung',
       satuanStok: 'Karung',
       gambar:
@@ -106,7 +106,7 @@ class _KatalogPageState extends State<KatalogPage> {
     BarangTani(
       nama: 'Pupuk NPK Daun Hijau',
       kategori: 'Pupuk',
-      harga: 42000,
+      harga: 84000,
       satuan: 'karung',
       satuanStok: 'Karung',
       gambar:
@@ -116,7 +116,7 @@ class _KatalogPageState extends State<KatalogPage> {
     BarangTani(
       nama: 'Sekop Tangan Baja',
       kategori: 'Alat',
-      harga: 32000,
+      harga: 64000,
       satuan: 'Buah',
       satuanStok: 'Buah',
       gambar:
